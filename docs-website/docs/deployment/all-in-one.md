@@ -87,6 +87,10 @@ It makes sense to add a cron job (e.g. once a week) on your host machine for tha
 The server is automatically started and initialized for Season 6. You can start
 playing right away.
 
+When building the all-in-one image from a checkout with Energy armor variants,
+their database seed is applied automatically before the game servers start. To
+disable this, set `OPENMU_SEED_ENERGY_ARMOR_VARIANTS=false` in the environment.
+
 Additionally, take a look at the [admin panel](../admin-panel/overview.md). If
 your containers run on docker at your local machine, you can simply go to
 [http://localhost/](http://localhost/).

@@ -27,6 +27,7 @@ services:
       DB_HOST: ${DB_HOST:-database}
       DB_ADMIN_USER: ${DB_ADMIN_USER:-}
       DB_ADMIN_PW: ${DB_ADMIN_PW:-}
+      OPENMU_SEED_ENERGY_ARMOR_VARIANTS: ${OPENMU_SEED_ENERGY_ARMOR_VARIANTS:-true}
       ASPNETCORE_URLS: http://+:8080
       # Optional bootstrap admin panel user. Without it, the admin panel is reachable
       # without a login until the first user has been created within the panel itself.
@@ -37,6 +38,7 @@ services:
       # website authenticates itself at the public API under /api.
     volumes:
       - adminpanel-keys:/app/data-protection-keys
+      - ./energy-armor-variants.sql:/app/energy-armor-variants.sql:ro
     working_dir: /app/
     depends_on:
       - database

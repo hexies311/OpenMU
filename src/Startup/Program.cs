@@ -260,9 +260,11 @@ internal sealed class Program : IDisposable
         _ = OpenMU.GameServer.ClientVersionResolver.DefaultVersion;
 
         var addAdminPanel = this.IsAdminPanelEnabled(args);
-        await new ConfigFileDatabaseConnectionStringProvider().InitializeAsync(default).ConfigureAwait(false);
+        var databaseConnectionStringProvider = new ConfigFileDatabaseConnectionStringProvider();
+        await databaseConnectionStringProvider.InitializeAsync(default).ConfigureAwait(false);
 
         var builder = WebApplication.CreateBuilder(args);
+        builder.Services.AddSingleton<IDatabaseConnectionSettingProvider>(databaseConnectionStringProvider);
 
         builder.Host.UseSerilog(this._logger);
         if (addAdminPanel)
@@ -287,6 +289,11 @@ internal sealed class Program : IDisposable
             }
 
             builder.AddAdminPanel(includeMapApp: true);
+        }
+
+        if (builder.Configuration.GetValue<bool>("OPENMU_SEED_ENERGY_ARMOR_VARIANTS"))
+        {
+            builder.Services.AddHostedService<EnergyArmorVariantSeedService>();
         }
 
         builder.Services.AddSingleton(this._servers)
