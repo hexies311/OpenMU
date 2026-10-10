@@ -10,13 +10,24 @@ SELECT source."Id" AS source_definition_id,
        source."Group" AS item_group,
        source."Number" AS source_number,
        target.variant_number,
-       source."GameConfigurationId" AS game_configuration_id
+           CASE
+               WHEN source."Number" = 50 THEN replace(source."Name", 'Faith', 'Divine')
+               WHEN source."Group" = 8 AND source."Number" = 24 THEN replace(source."Name", 'Red Sprit', 'Red Spirit')
+               ELSE source."Name"
+           END || ' (Energy)' AS variant_name,
+           source."GameConfigurationId" AS game_configuration_id
 FROM config."ItemDefinition" source
 JOIN (VALUES
     (10::smallint, 344::smallint),
     (11::smallint, 345::smallint),
     (12::smallint, 346::smallint),
-    (14::smallint, 347::smallint)) target(source_number, variant_number)
+    (14::smallint, 347::smallint),
+    (13::smallint, 355::smallint),
+    (50::smallint, 356::smallint),
+    (24::smallint, 357::smallint),
+    (31::smallint, 358::smallint),
+    (36::smallint, 359::smallint),
+    (49::smallint, 360::smallint)) target(source_number, variant_number)
   ON source."Number" = target.source_number
 LEFT JOIN config."ItemDefinition" existing
   ON existing."GameConfigurationId" IS NOT DISTINCT FROM source."GameConfigurationId"
@@ -26,8 +37,8 @@ WHERE source."Group" BETWEEN 7 AND 11;
 
 DO $$
 BEGIN
-    IF (SELECT count(*) FROM energy_armor_map) <> 20 THEN
-        RAISE EXCEPTION 'Expected 20 original armor definitions; found %', (SELECT count(*) FROM energy_armor_map);
+    IF (SELECT count(*) FROM energy_armor_map) <> 50 THEN
+        RAISE EXCEPTION 'Expected 50 original armor definitions; found %', (SELECT count(*) FROM energy_armor_map);
     END IF;
 
     IF (SELECT count(*) FROM config."AttributeDefinition" WHERE "Designation" = 'Total Agility Requirement Value') <> 1
@@ -40,13 +51,101 @@ BEGIN
         FROM energy_armor_map map
         JOIN config."ItemDefinition" source ON source."Id" = map.source_definition_id
         JOIN config."ItemDefinition" variant ON variant."Id" = map.variant_definition_id
-        WHERE variant."Name" IS DISTINCT FROM source."Name" || ' (Energy)'
-           OR variant."Group" <> source."Group"
+        WHERE variant."Group" <> source."Group"
            OR variant."Number" <> map.variant_number
     ) THEN
         RAISE EXCEPTION 'A target Energy armor ID is occupied by a different item.';
     END IF;
 END $$;
+
+CREATE TEMP TABLE divine_glove_energy_requirement ON COMMIT DROP AS
+SELECT target.source_definition_id AS item_definition_id,
+       energy_attribute."Id" AS attribute_id,
+       peer_requirement."GameMapDefinitionId" AS game_map_definition_id,
+       peer_requirement."SkillId" AS skill_id,
+       peer_requirement."SkillId1" AS skill_id1,
+       min(peer_requirement."MinimumValue")::integer AS minimum_value
+FROM energy_armor_map target
+JOIN config."AttributeDefinition" energy_attribute
+  ON energy_attribute."Designation" = 'Total Energy Requirement Value'
+JOIN energy_armor_map peer
+  ON peer.source_number = target.source_number
+ AND peer.item_group IN (7, 8, 9, 11)
+ AND peer.game_configuration_id IS NOT DISTINCT FROM target.game_configuration_id
+JOIN config."AttributeRequirement" peer_requirement
+  ON peer_requirement."ItemDefinitionId" = peer.source_definition_id
+ AND peer_requirement."AttributeId" = energy_attribute."Id"
+WHERE target.source_number = 50
+  AND target.item_group = 10
+  AND NOT EXISTS (
+      SELECT 1
+      FROM config."AttributeRequirement" existing_requirement
+      WHERE existing_requirement."ItemDefinitionId" = target.source_definition_id
+        AND existing_requirement."AttributeId" = energy_attribute."Id")
+GROUP BY target.source_definition_id, energy_attribute."Id",
+         peer_requirement."GameMapDefinitionId", peer_requirement."SkillId", peer_requirement."SkillId1"
+HAVING count(DISTINCT peer.item_group) = 4
+   AND min(peer_requirement."MinimumValue") = max(peer_requirement."MinimumValue");
+
+DO $$
+BEGIN
+    IF EXISTS (
+        SELECT 1
+        FROM energy_armor_map target
+        JOIN config."AttributeDefinition" energy_attribute
+          ON energy_attribute."Designation" = 'Total Energy Requirement Value'
+        WHERE target.source_number = 50
+          AND target.item_group = 10
+          AND NOT EXISTS (
+              SELECT 1
+              FROM config."AttributeRequirement" existing_requirement
+              WHERE existing_requirement."ItemDefinitionId" = target.source_definition_id
+                AND existing_requirement."AttributeId" = energy_attribute."Id")
+          AND NOT EXISTS (
+              SELECT 1
+              FROM divine_glove_energy_requirement recovered_requirement
+              WHERE recovered_requirement.item_definition_id = target.source_definition_id)
+    ) THEN
+        RAISE EXCEPTION 'Could not recover the Divine glove Energy requirement from its matching set pieces.';
+    END IF;
+END $$;
+
+INSERT INTO config."AttributeRequirement" (
+    "Id", "AttributeId", "GameMapDefinitionId", "ItemDefinitionId", "SkillId", "SkillId1", "MinimumValue")
+SELECT md5('openmu-energy-armor-v1:source-requirement:divine-glove-energy:' ||
+           requirement.item_definition_id::text || ':' ||
+           COALESCE(requirement.game_map_definition_id::text, 'NULL') || ':' ||
+           COALESCE(requirement.skill_id::text, 'NULL') || ':' ||
+           COALESCE(requirement.skill_id1::text, 'NULL'))::uuid,
+       requirement.attribute_id, requirement.game_map_definition_id, requirement.item_definition_id,
+       requirement.skill_id, requirement.skill_id1, requirement.minimum_value
+FROM divine_glove_energy_requirement requirement;
+
+CREATE TEMP TABLE energy_armor_requirement_map ON COMMIT DROP AS
+SELECT map.variant_definition_id,
+       requirement."AttributeId" AS attribute_id,
+       requirement."GameMapDefinitionId" AS game_map_definition_id,
+       requirement."SkillId" AS skill_id,
+       requirement."SkillId1" AS skill_id1,
+       requirement."MinimumValue" AS minimum_value,
+       requirement."Id" AS source_requirement_id
+FROM energy_armor_map map
+JOIN config."AttributeRequirement" requirement ON requirement."ItemDefinitionId" = map.source_definition_id
+JOIN config."AttributeDefinition" attribute ON attribute."Id" = requirement."AttributeId"
+WHERE attribute."Designation" NOT IN ('Total Agility Requirement Value', 'Total Energy Requirement Value')
+UNION ALL
+SELECT map.variant_definition_id,
+       (SELECT "Id" FROM config."AttributeDefinition" WHERE "Designation" = 'Total Energy Requirement Value'),
+       requirement."GameMapDefinitionId",
+       requirement."SkillId",
+       requirement."SkillId1",
+       sum(requirement."MinimumValue")::integer,
+       NULL::uuid
+FROM energy_armor_map map
+JOIN config."AttributeRequirement" requirement ON requirement."ItemDefinitionId" = map.source_definition_id
+JOIN config."AttributeDefinition" attribute ON attribute."Id" = requirement."AttributeId"
+WHERE attribute."Designation" IN ('Total Agility Requirement Value', 'Total Energy Requirement Value')
+GROUP BY map.variant_definition_id, requirement."GameMapDefinitionId", requirement."SkillId", requirement."SkillId1";
 
 INSERT INTO config."ItemDefinition" (
     "Id", "ItemSlotId", "ConsumeEffectId", "SkillId", "GameConfigurationId",
@@ -58,7 +157,7 @@ INSERT INTO config."ItemDefinition" (
 SELECT map.variant_definition_id, source."ItemSlotId", source."ConsumeEffectId", source."SkillId",
        source."GameConfigurationId", map.variant_number, source."Width", source."Height",
        source."DropsFromMonsters", source."IsAmmunition", source."IsBoundToCharacter",
-       source."Name" || ' (Energy)', source."DropLevel", source."MaximumItemLevel",
+       map.variant_name, source."DropLevel", source."MaximumItemLevel",
        source."Durability", source."Group", source."Value", source."MaximumSockets",
        source."PetExperienceFormula", source."StorageLimitPerCharacter",
        source."MaximumDropLevel", source."IsQuestItem", source."IsDroppable",
@@ -68,34 +167,47 @@ FROM energy_armor_map map
 JOIN config."ItemDefinition" source ON source."Id" = map.source_definition_id
 ON CONFLICT DO NOTHING;
 
+-- Keep existing variants upgradeable when repairing definitions from an older seed.
+UPDATE config."ItemDefinition" variant
+SET "ItemSlotId" = source."ItemSlotId",
+    "MaximumItemLevel" = source."MaximumItemLevel",
+    "MaximumSockets" = source."MaximumSockets",
+    "Name" = map.variant_name
+FROM energy_armor_map map
+JOIN config."ItemDefinition" source ON source."Id" = map.source_definition_id
+WHERE variant."Id" = map.variant_definition_id
+  AND (variant."ItemSlotId" IS DISTINCT FROM source."ItemSlotId"
+       OR variant."MaximumItemLevel" IS DISTINCT FROM source."MaximumItemLevel"
+       OR variant."MaximumSockets" IS DISTINCT FROM source."MaximumSockets"
+       OR variant."Name" IS DISTINCT FROM map.variant_name);
+
+DELETE FROM config."AttributeRequirement" variant_requirement
+USING energy_armor_map map
+WHERE variant_requirement."ItemDefinitionId" = map.variant_definition_id;
+
 INSERT INTO config."AttributeRequirement" (
     "Id", "AttributeId", "GameMapDefinitionId", "ItemDefinitionId", "SkillId", "SkillId1", "MinimumValue")
-SELECT md5('openmu-energy-armor-v1:requirement:' || requirement."Id"::text || ':' || map.variant_definition_id::text)::uuid,
-       CASE WHEN source_attribute."Designation" = 'Total Agility Requirement Value'
-            THEN (SELECT "Id" FROM config."AttributeDefinition" WHERE "Designation" = 'Total Energy Requirement Value')
-            ELSE requirement."AttributeId" END,
-       requirement."GameMapDefinitionId", map.variant_definition_id,
-       requirement."SkillId", requirement."SkillId1", requirement."MinimumValue"
-FROM energy_armor_map map
-JOIN config."AttributeRequirement" requirement ON requirement."ItemDefinitionId" = map.source_definition_id
-JOIN config."AttributeDefinition" source_attribute ON source_attribute."Id" = requirement."AttributeId"
-WHERE NOT EXISTS (
-    SELECT 1
-    FROM config."AttributeRequirement" existing
-    WHERE existing."ItemDefinitionId" = map.variant_definition_id
-      AND existing."AttributeId" = CASE WHEN source_attribute."Designation" = 'Total Agility Requirement Value'
-            THEN (SELECT "Id" FROM config."AttributeDefinition" WHERE "Designation" = 'Total Energy Requirement Value')
-            ELSE requirement."AttributeId" END
-      AND existing."GameMapDefinitionId" IS NOT DISTINCT FROM requirement."GameMapDefinitionId"
-      AND existing."SkillId" IS NOT DISTINCT FROM requirement."SkillId"
-      AND existing."SkillId1" IS NOT DISTINCT FROM requirement."SkillId1"
-      AND existing."MinimumValue" = requirement."MinimumValue");
+SELECT md5('openmu-energy-armor-v1:requirement:' || requirement.variant_definition_id::text || ':' ||
+           COALESCE(requirement.source_requirement_id::text,
+               requirement.attribute_id::text || ':' || COALESCE(requirement.game_map_definition_id::text, 'NULL') || ':' ||
+               COALESCE(requirement.skill_id::text, 'NULL') || ':' || COALESCE(requirement.skill_id1::text, 'NULL')))::uuid,
+       requirement.attribute_id, requirement.game_map_definition_id, requirement.variant_definition_id,
+       requirement.skill_id, requirement.skill_id1, requirement.minimum_value
+FROM energy_armor_requirement_map requirement;
+
+DELETE FROM config."ItemDefinitionCharacterClass" variant_class
+USING energy_armor_map map
+WHERE variant_class."ItemDefinitionId" = map.variant_definition_id;
 
 INSERT INTO config."ItemDefinitionCharacterClass" ("ItemDefinitionId", "CharacterClassId")
 SELECT map.variant_definition_id, link."CharacterClassId"
 FROM energy_armor_map map
 JOIN config."ItemDefinitionCharacterClass" link ON link."ItemDefinitionId" = map.source_definition_id
 ON CONFLICT DO NOTHING;
+
+DELETE FROM config."ItemDefinitionItemOptionDefinition" variant_option
+USING energy_armor_map map
+WHERE variant_option."ItemDefinitionId" = map.variant_definition_id;
 
 INSERT INTO config."ItemDefinitionItemOptionDefinition" ("ItemDefinitionId", "ItemOptionDefinitionId")
 SELECT map.variant_definition_id, link."ItemOptionDefinitionId"
@@ -204,6 +316,14 @@ FROM energy_armor_map map
 JOIN config."ItemDropItemGroupItemDefinition" link ON link."ItemDefinitionId" = map.source_definition_id
 ON CONFLICT DO NOTHING;
 
+-- Restore Elf Lala's default stock by removing any previously seeded Energy copies.
+DELETE FROM data."Item" variant_item
+USING config."MonsterDefinition" npc, energy_armor_map map
+WHERE npc."Number" = 242
+  AND npc."MerchantStoreId" = variant_item."ItemStorageId"
+  AND map.variant_number BETWEEN 344 AND 347
+  AND variant_item."DefinitionId" = map.variant_definition_id;
+
 CREATE TEMP TABLE energy_armor_shop_sources ON COMMIT DROP AS
 SELECT source_item."Id" AS source_item_id,
        COALESCE(
@@ -217,14 +337,17 @@ SELECT source_item."Id" AS source_item_id,
        map.variant_number
 FROM data."Item" source_item
 JOIN config."MonsterDefinition" npc ON npc."MerchantStoreId" = source_item."ItemStorageId"
-JOIN energy_armor_map map ON map.source_definition_id = source_item."DefinitionId"
+JOIN energy_armor_map map
+  ON map.source_definition_id = source_item."DefinitionId"
+ AND map.variant_number BETWEEN 344 AND 347
 LEFT JOIN LATERAL (
     SELECT target_item."Id", target_item."ItemSlot"
     FROM data."Item" target_item
     WHERE target_item."ItemStorageId" = source_item."ItemStorageId"
       AND target_item."DefinitionId" = map.variant_definition_id
     ORDER BY target_item."ItemSlot"
-    LIMIT 1) existing_item ON TRUE;
+    LIMIT 1) existing_item ON TRUE
+WHERE npc."Number" <> 242;
 
 CREATE TEMP TABLE energy_armor_shop_missing ON COMMIT DROP AS
 SELECT source.*,
@@ -291,5 +414,105 @@ FROM energy_armor_shop_map shop
 JOIN data."ItemItemOfItemSet" source_link ON source_link."ItemId" = shop.source_item_id
 JOIN energy_armor_set_map set_map ON set_map.source_set_item_id = source_link."ItemOfItemSetId"
 ON CONFLICT DO NOTHING;
+
+DO $$
+BEGIN
+    IF EXISTS (
+        SELECT 1
+        FROM energy_armor_map map
+        JOIN config."ItemDefinition" source ON source."Id" = map.source_definition_id
+        JOIN config."ItemDefinition" variant ON variant."Id" = map.variant_definition_id
+        WHERE variant."MaximumItemLevel" IS DISTINCT FROM source."MaximumItemLevel"
+           OR variant."MaximumSockets" IS DISTINCT FROM source."MaximumSockets"
+    ) THEN
+        RAISE EXCEPTION 'An Energy armor definition does not preserve its source upgrade limits.';
+    END IF;
+
+    IF EXISTS (
+        SELECT 1
+        FROM energy_armor_map map
+        JOIN config."AttributeRequirement" requirement ON requirement."ItemDefinitionId" = map.variant_definition_id
+        JOIN config."AttributeDefinition" attribute ON attribute."Id" = requirement."AttributeId"
+        WHERE attribute."Designation" = 'Total Agility Requirement Value'
+    ) THEN
+        RAISE EXCEPTION 'An Energy armor variant still has an Agility requirement.';
+    END IF;
+
+    IF EXISTS (
+        (SELECT variant_definition_id, attribute_id, game_map_definition_id, skill_id, skill_id1, minimum_value
+         FROM energy_armor_requirement_map
+         EXCEPT
+         SELECT map.variant_definition_id, requirement."AttributeId", requirement."GameMapDefinitionId",
+                requirement."SkillId", requirement."SkillId1", sum(requirement."MinimumValue")::integer
+         FROM energy_armor_map map
+         JOIN config."AttributeRequirement" requirement ON requirement."ItemDefinitionId" = map.variant_definition_id
+         GROUP BY map.variant_definition_id, requirement."AttributeId", requirement."GameMapDefinitionId",
+                  requirement."SkillId", requirement."SkillId1")
+        UNION ALL
+        (SELECT map.variant_definition_id, requirement."AttributeId", requirement."GameMapDefinitionId",
+                requirement."SkillId", requirement."SkillId1", sum(requirement."MinimumValue")::integer
+         FROM energy_armor_map map
+         JOIN config."AttributeRequirement" requirement ON requirement."ItemDefinitionId" = map.variant_definition_id
+         GROUP BY map.variant_definition_id, requirement."AttributeId", requirement."GameMapDefinitionId",
+                  requirement."SkillId", requirement."SkillId1"
+         EXCEPT
+         SELECT variant_definition_id, attribute_id, game_map_definition_id, skill_id, skill_id1, minimum_value
+         FROM energy_armor_requirement_map)
+    ) THEN
+        RAISE EXCEPTION 'An Energy armor variant does not match its source requirements with Agility added to Energy.';
+    END IF;
+
+    IF EXISTS (
+        (SELECT map.variant_definition_id, link."ItemOptionDefinitionId"
+         FROM energy_armor_map map
+         JOIN config."ItemDefinitionItemOptionDefinition" link ON link."ItemDefinitionId" = map.source_definition_id
+         EXCEPT
+         SELECT map.variant_definition_id, link."ItemOptionDefinitionId"
+         FROM energy_armor_map map
+         JOIN config."ItemDefinitionItemOptionDefinition" link ON link."ItemDefinitionId" = map.variant_definition_id)
+        UNION ALL
+        (SELECT map.variant_definition_id, link."ItemOptionDefinitionId"
+         FROM energy_armor_map map
+         JOIN config."ItemDefinitionItemOptionDefinition" link ON link."ItemDefinitionId" = map.variant_definition_id
+         EXCEPT
+         SELECT map.variant_definition_id, link."ItemOptionDefinitionId"
+         FROM energy_armor_map map
+         JOIN config."ItemDefinitionItemOptionDefinition" link ON link."ItemDefinitionId" = map.source_definition_id)
+    ) THEN
+        RAISE EXCEPTION 'An Energy armor variant does not exactly mirror the item options used by jewel upgrade handlers.';
+    END IF;
+
+    IF EXISTS (
+        SELECT 1
+        FROM energy_armor_map map
+        JOIN data."Item" item ON item."DefinitionId" = map.variant_definition_id
+        JOIN config."MonsterDefinition" npc ON npc."MerchantStoreId" = item."ItemStorageId"
+        WHERE map.variant_number BETWEEN 355 AND 360
+    ) THEN
+        RAISE EXCEPTION 'An Elf Energy armor variant was added to an NPC shop.';
+    END IF;
+
+    IF EXISTS (
+        SELECT 1
+        FROM energy_armor_map map
+        JOIN data."Item" item ON item."DefinitionId" = map.variant_definition_id
+        JOIN config."MonsterDefinition" npc ON npc."MerchantStoreId" = item."ItemStorageId"
+        WHERE npc."Number" = 242
+          AND map.variant_number BETWEEN 344 AND 347
+    ) THEN
+        RAISE EXCEPTION 'An Energy armor variant was added to Elf Lala''s shop.';
+    END IF;
+
+    IF (
+        SELECT count(*)
+        FROM energy_armor_map map
+        JOIN data."Item" item ON item."DefinitionId" = map.source_definition_id
+        JOIN config."MonsterDefinition" npc ON npc."MerchantStoreId" = item."ItemStorageId"
+        WHERE npc."Number" = 242
+          AND map.source_number BETWEEN 10 AND 12
+    ) <> 15 THEN
+        RAISE EXCEPTION 'Elf Lala''s original Vine, Silk, and Wind stock is incomplete.';
+    END IF;
+END $$;
 
 COMMIT;

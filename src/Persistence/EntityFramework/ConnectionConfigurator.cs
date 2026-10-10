@@ -131,7 +131,9 @@ public static class ConnectionConfigurator
             switch (setting.DatabaseEngine)
             {
                 case DatabaseEngine.Npgsql:
-                    optionsBuilder.UseNpgsql(setting.ConnectionString!);
+                    optionsBuilder.UseNpgsql(
+                        setting.ConnectionString!,
+                        options => options.EnableRetryOnFailure());
                     optionsBuilder.ReplaceService<IMigrationsSqlGenerator, MyNpgsqlMigrationsSqlGenerator>();
                     optionsBuilder.ReplaceService<IModelCacheKeyFactory, MyModelCacheKeyFactory>();
                     return;

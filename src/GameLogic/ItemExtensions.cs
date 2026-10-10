@@ -380,7 +380,11 @@ public static class ItemExtensions
             var multiplier = 3;
             if (totalAttribute == Stats.TotalEnergy)
             {
-                multiplier = item.Definition is { Group: >= 7 and <= 11, Number: >= 344 and <= 347 } ? 3 : 4;
+                multiplier = item.Definition is { Group: >= 7 and <= 11 } definition
+                    && (definition.Number is >= 344 and <= 347 or >= 355 and <= 360)
+                    && definition.Number != 356
+                    ? 3
+                    : 4;
 
                 // Summoner books, which increase the curse damage by their book rise, are calculated differently.
                 if (item.IsBook(out _))

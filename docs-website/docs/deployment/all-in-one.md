@@ -90,6 +90,16 @@ playing right away.
 When building the all-in-one image from a checkout with Energy armor variants,
 their database seed is applied automatically before the game servers start. To
 disable this, set `OPENMU_SEED_ENERGY_ARMOR_VARIANTS=false` in the environment.
+The seed creates Vine, Silk, Wind, Guardian, Spirit, Divine, Red Spirit,
+Sylphid Ray, Iris, and Seraphim variants. It converts the original Agility
+requirement to Energy; if the source item already has an Energy requirement,
+the base requirements are added together. The seed also mirrors original drops
+and jewel-upgrade eligibility and does not add the six Elf sets to NPC shops.
+If the Divine glove source row is missing its original Energy requirement, the
+seed restores it from the matching Divine set pieces before creating the
+combined Energy variant. Divine Energy copies use the standard Energy
+requirement multiplier; copies that only convert Agility retain the Agility
+multiplier so their requirements remain equivalent to the originals.
 
 Additionally, take a look at the [admin panel](../admin-panel/overview.md). If
 your containers run on docker at your local machine, you can simply go to

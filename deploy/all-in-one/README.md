@@ -22,7 +22,18 @@ before the server is reachable from the internet.
 The all-in-one deployment applies `energy-armor-variants.sql` automatically at
 startup, after OpenMU initializes the database and before its game servers load
 configuration. The seed adds Energy-requirement copies of the Vine, Silk, Wind,
-and Guardian armor sets and is safe to re-run.
+Guardian, Spirit, Divine, Red Spirit, Sylphid Ray, Iris, and Seraphim armor
+sets and is safe to re-run. Each copy converts the original Agility requirement
+to Energy; if the source item already has an Energy requirement, the base
+requirements are added together. It mirrors the original drops and jewel-upgrade
+eligibility. The four earlier variants (344–347) follow their source merchant
+stock, except Elf Lala (NPC 242), whose default inventory is kept unchanged.
+The six additional Elf sets are not added to NPC shops. If the Divine glove
+source row is missing its original Energy requirement, the seed restores it from
+the matching Divine set pieces
+before creating the combined Energy variant. Divine Energy copies retain the
+standard Energy requirement multiplier; copies that only convert Agility use
+the Agility multiplier so their requirements remain equivalent to the originals.
 
 Automatic seeding is enabled by default. To opt out, set this in `.env`:
 

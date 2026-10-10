@@ -88,6 +88,42 @@ public class ItemRequirementCalculationTest
     }
 
     /// <summary>
+    /// Verifies that the existing and new Energy armor item numbers use the same Energy requirement scaling.
+    /// </summary>
+    /// <param name="itemNumber">The item number.</param>
+    [TestCase(344, 30)]
+    [TestCase(345, 30)]
+    [TestCase(346, 30)]
+    [TestCase(347, 30)]
+    [TestCase(355, 30)]
+    [TestCase(356, 34)]
+    [TestCase(357, 30)]
+    [TestCase(358, 30)]
+    [TestCase(359, 30)]
+    [TestCase(360, 30)]
+    public void EnergyArmorUsesEnergyRequirementMultiplier(short itemNumber, int expectedRequirement)
+    {
+        var item = new Item();
+        item.Definition = new ItemDefinition
+        {
+            DropLevel = 6,
+            Group = 7,
+            Number = itemNumber,
+            ItemSlot = new ItemSlotType(),
+        };
+        var energyRequirement = new Persistence.BasicModel.AttributeRequirement
+        {
+            Attribute = Stats.TotalEnergyRequirementValue,
+            MinimumValue = 60,
+        };
+
+        var result = item.GetRequirement(energyRequirement);
+
+        Assert.That(result.Item1, Is.EqualTo(Stats.TotalEnergy));
+        Assert.That(result.Item2, Is.EqualTo(expectedRequirement));
+    }
+
+    /// <summary>
     /// Tests requirement calculation for the 'Sunlight Armor'.
     /// </summary>
     /// <param name="itemLevel">The item level.</param>
