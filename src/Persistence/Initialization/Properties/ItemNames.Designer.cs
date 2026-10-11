@@ -4312,6 +4312,48 @@ namespace MUnique.OpenMU.Persistence.Initialization.Properties {
             }
         }
 
+        /// <summary>Gets SmallDefenseUpPotion from the item name resources.</summary>
+        public static string SmallDefenseUpPotion {
+            get {
+                return ResourceManager.GetString("SmallDefenseUpPotion", resourceCulture);
+            }
+        }
+
+        /// <summary>Gets MediumDefenseUpPotion from the item name resources.</summary>
+        public static string MediumDefenseUpPotion {
+            get {
+                return ResourceManager.GetString("MediumDefenseUpPotion", resourceCulture);
+            }
+        }
+
+        /// <summary>Gets LargeDefenseUpPotion from the item name resources.</summary>
+        public static string LargeDefenseUpPotion {
+            get {
+                return ResourceManager.GetString("LargeDefenseUpPotion", resourceCulture);
+            }
+        }
+
+        /// <summary>Gets SmallDamageUpPotion from the item name resources.</summary>
+        public static string SmallDamageUpPotion {
+            get {
+                return ResourceManager.GetString("SmallDamageUpPotion", resourceCulture);
+            }
+        }
+
+        /// <summary>Gets MediumDamageUpPotion from the item name resources.</summary>
+        public static string MediumDamageUpPotion {
+            get {
+                return ResourceManager.GetString("MediumDamageUpPotion", resourceCulture);
+            }
+        }
+
+        /// <summary>Gets LargeDamageUpPotion from the item name resources.</summary>
+        public static string LargeDamageUpPotion {
+            get {
+                return ResourceManager.GetString("LargeDamageUpPotion", resourceCulture);
+            }
+        }
+
         /// <summary>Gets Gemstone from the item name resources.</summary>
         public static string Gemstone {
             get {

@@ -1815,6 +1815,24 @@
   <data name="LargeComplexPotion" xml:space="preserve">
     <value>Großer Komplextrank</value>
   </data>
+  <data name="SmallDefenseUpPotion" xml:space="preserve">
+    <value>Kleiner Verteidigungstrank</value>
+  </data>
+  <data name="MediumDefenseUpPotion" xml:space="preserve">
+    <value>Mittlerer Verteidigungstrank</value>
+  </data>
+  <data name="LargeDefenseUpPotion" xml:space="preserve">
+    <value>Großer Verteidigungstrank</value>
+  </data>
+  <data name="SmallDamageUpPotion" xml:space="preserve">
+    <value>Kleiner Schadens-Trank</value>
+  </data>
+  <data name="MediumDamageUpPotion" xml:space="preserve">
+    <value>Mittlerer Schadens-Trank</value>
+  </data>
+  <data name="LargeDamageUpPotion" xml:space="preserve">
+    <value>Großer Schadens-Trank</value>
+  </data>
   <data name="Gemstone" xml:space="preserve">
     <value>Edelstein</value>
   </data>

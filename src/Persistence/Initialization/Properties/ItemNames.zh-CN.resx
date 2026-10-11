@@ -1839,6 +1839,24 @@
   <data name="LargeComplexPotion" xml:space="preserve">
     <value>大瓶复合药水</value>
   </data>
+  <data name="SmallDefenseUpPotion" xml:space="preserve">
+    <value>小型防御提升药水</value>
+  </data>
+  <data name="MediumDefenseUpPotion" xml:space="preserve">
+    <value>中型防御提升药水</value>
+  </data>
+  <data name="LargeDefenseUpPotion" xml:space="preserve">
+    <value>大型防御提升药水</value>
+  </data>
+  <data name="SmallDamageUpPotion" xml:space="preserve">
+    <value>小型伤害提升药水</value>
+  </data>
+  <data name="MediumDamageUpPotion" xml:space="preserve">
+    <value>中型伤害提升药水</value>
+  </data>
+  <data name="LargeDamageUpPotion" xml:space="preserve">
+    <value>大型伤害提升药水</value>
+  </data>
   <data name="Gemstone" xml:space="preserve">
     <value>再生原石</value>
   </data>

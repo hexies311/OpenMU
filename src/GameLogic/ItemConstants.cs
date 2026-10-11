@@ -185,6 +185,36 @@ public class ItemConstants
     public static ItemIdentifier LargeComplexPotion => new(40, 14);
 
     /// <summary>
+    /// Gets the identifier for the small defense up potion.
+    /// </summary>
+    public static ItemIdentifier SmallDefenseUpPotion => new(140, 14);
+
+    /// <summary>
+    /// Gets the identifier for the medium defense up potion.
+    /// </summary>
+    public static ItemIdentifier MediumDefenseUpPotion => new(141, 14);
+
+    /// <summary>
+    /// Gets the identifier for the large defense up potion.
+    /// </summary>
+    public static ItemIdentifier LargeDefenseUpPotion => new(142, 14);
+
+    /// <summary>
+    /// Gets the identifier for the small damage up potion.
+    /// </summary>
+    public static ItemIdentifier SmallDamageUpPotion => new(143, 14);
+
+    /// <summary>
+    /// Gets the identifier for the medium damage up potion.
+    /// </summary>
+    public static ItemIdentifier MediumDamageUpPotion => new(144, 14);
+
+    /// <summary>
+    /// Gets the identifier for the large damage up potion.
+    /// </summary>
+    public static ItemIdentifier LargeDamageUpPotion => new(145, 14);
+
+    /// <summary>
     /// Gets the identifier for the jewel of harmony.
     /// </summary>
     public static ItemIdentifier JewelOfHarmony => new(42, 14);

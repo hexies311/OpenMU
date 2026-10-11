@@ -301,6 +301,36 @@ internal enum MagicEffectNumber : short
     Cold = 0x56,
 
     /// <summary>
+    /// The small defense up potion effect.
+    /// </summary>
+    DefenseUpSmall = 0x57,
+
+    /// <summary>
+    /// The medium defense up potion effect.
+    /// </summary>
+    DefenseUpMedium = 0x58,
+
+    /// <summary>
+    /// The large defense up potion effect.
+    /// </summary>
+    DefenseUpLarge = 0x59,
+
+    /// <summary>
+    /// The small damage up potion effect.
+    /// </summary>
+    DamageUpSmall = 0x5A,
+
+    /// <summary>
+    /// The medium damage up potion effect.
+    /// </summary>
+    DamageUpMedium = 0x5B,
+
+    /// <summary>
+    /// The large damage up potion effect.
+    /// </summary>
+    DamageUpLarge = 0x5C,
+
+    /// <summary>
     /// The ignore defense effect of the rage fighter.
     /// </summary>
     IgnoreDefense = 129,
