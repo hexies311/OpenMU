@@ -80,6 +80,8 @@ public class ChaosMixes : InitializerBase
 
         var cherryBlossomSpirit = this.GameConfiguration.Monsters.Single(m => m.NpcWindow == NpcWindow.CherryBlossomBranchesAssembly);
         cherryBlossomSpirit.ItemCraftings.Add(this.CherryBlossomEventCrafting());
+
+        Items.DefenseDamagePotions.InitializeCraftings(this.Context, this.GameConfiguration);
     }
 
     private ItemCrafting ItemLevelUpgradeCrafting(byte craftingNumber, byte targetLevel)

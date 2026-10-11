@@ -61,6 +61,8 @@ public class Potions : InitializerBase
         this.GameConfiguration.Items.Add(this.CreateCherryBlossomWine());
         this.GameConfiguration.Items.Add(this.CreateCherryBlossomRiceCake());
         this.GameConfiguration.Items.Add(this.CreateCherryBlossomFlowerPetal());
+
+        DefenseDamagePotions.InitializeItems(this.Context, this.GameConfiguration);
     }
 
     private ItemDefinition CreateAlcohol()

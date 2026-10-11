@@ -1839,6 +1839,24 @@
   <data name="LargeComplexPotion" xml:space="preserve">
     <value>Large Complex Potion</value>
   </data>
+  <data name="SmallDefenseUpPotion" xml:space="preserve">
+    <value>Small Defense Up Potion</value>
+  </data>
+  <data name="MediumDefenseUpPotion" xml:space="preserve">
+    <value>Medium Defense Up Potion</value>
+  </data>
+  <data name="LargeDefenseUpPotion" xml:space="preserve">
+    <value>Large Defense Up Potion</value>
+  </data>
+  <data name="SmallDamageUpPotion" xml:space="preserve">
+    <value>Small Damage Up Potion</value>
+  </data>
+  <data name="MediumDamageUpPotion" xml:space="preserve">
+    <value>Medium Damage Up Potion</value>
+  </data>
+  <data name="LargeDamageUpPotion" xml:space="preserve">
+    <value>Large Damage Up Potion</value>
+  </data>
   <data name="Gemstone" xml:space="preserve">
     <value>Gemstone</value>
   </data>

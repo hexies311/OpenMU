@@ -206,6 +206,12 @@ public class ItemRules : InitializerBase
         Rule(14, 107, Blocked.Repair), // Fifth Secromicon Fragment
         Rule(14, 108, Blocked.Repair), // Sixth Secromicon Fragment
         Rule(14, 109, Blocked.Repair), // Complete Secromicon
+        Rule(14, 140, Blocked.Repair), // Small Defense Up Potion
+        Rule(14, 141, Blocked.Repair), // Medium Defense Up Potion
+        Rule(14, 142, Blocked.Repair), // Large Defense Up Potion
+        Rule(14, 143, Blocked.Repair), // Small Damage Up Potion
+        Rule(14, 144, Blocked.Repair), // Medium Damage Up Potion
+        Rule(14, 145, Blocked.Repair), // Large Damage Up Potion
         Rule(15, 0, Blocked.Repair), // Scroll of Poison
         Rule(15, 1, Blocked.Repair), // Scroll of Meteorite
         Rule(15, 2, Blocked.Repair), // Scroll of Lighting
